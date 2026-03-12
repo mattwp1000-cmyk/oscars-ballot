@@ -403,7 +403,7 @@ async function saveConfig() {
     // try to extract object whether pasted with or without variable declaration
     const match = raw.match(/\{[\s\S]*\}/);
     if (!match) throw new Error('No object found');
-    config = JSON.parse(match[0].replace(/(\w+):/g, '"$1":').replace(/'/g,'"'));
+    config = JSON.parse(match[0]);
     if (!config.databaseURL) throw new Error('Missing databaseURL');
     localStorage.setItem(CONFIG_KEY, JSON.stringify(config));
     status.className = 'config-status ok';
