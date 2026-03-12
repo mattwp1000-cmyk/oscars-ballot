@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Oscars @ The Pollocks</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=EB+Garamond:ital,wght@0,400;1,400&family=Montserrat:wght@400;500;600&display=swap');
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:#f5f3ee;font-family:'EB Garamond',Georgia,serif;color:#1a1a1a;min-height:100vh;}
+.app{max-width:700px;margin:0 auto;padding:24px 20px;}
+.hdr{text-align:center;border-bottom:2px solid #1a1a1a;padding-bottom:12px;margin-bottom:20px;}
+.hdr h1{font-family:'Playfair Display',serif;font-size:24px;font-weight:700;}
+.hdr h1 em{font-style:italic;font-weight:400;font-size:18px;color:#666;}
+.hdr-meta{font-family:'Montserrat',sans-serif;font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:#999;margin-top:4px;}
+.tabs{display:flex;gap:0;border-bottom:2px solid #1a1a1a;margin-bottom:20px;}
+.tab{font-family:'Montserrat',sans-serif;font-size:11px;font-weight:500;letter-spacing:0.12em;text-transform:uppercase;padding:8px 18px;cursor:pointer;border:none;background:none;color:#999;border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .15s;}
+.tab.active{color:#1a1a1a;border-bottom-color:#1a1a1a;}
+.tab:hover{color:#1a1a1a;}
+.panel{display:none;}
+.panel.active{display:block;}
+.name-box{background:#fff;border:1px solid #ddd;border-radius:4px;padding:20px;margin-bottom:16px;text-align:center;}
+.name-box p{font-size:13px;color:#666;margin-bottom:10px;font-style:italic;}
+.name-row{display:flex;gap:8px;justify-content:center;}
+.name-row input{font-family:'EB Garamond',serif;font-size:15px;padding:6px 12px;border:1px solid #ccc;border-radius:3px;width:200px;}
+.name-row input:focus{outline:none;border-color:#1a1a1a;}
+.btn{font-family:'Montserrat',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;padding:7px 16px;background:#1a1a1a;color:#fff;border:none;border-radius:3px;cursor:pointer;transition:background .15s;}
+.btn:hover{background:#333;}
+.btn.sec{background:#fff;color:#1a1a1a;border:1px solid #ccc;}
+.btn.sec:hover{background:#f5f3ee;}
+.btn.gold{background:#c9a84c;color:#fff;}
+.btn.gold:hover{background:#b8962e;}
+.greeted{font-family:'Montserrat',sans-serif;font-size:10px;color:#888;letter-spacing:0.1em;text-transform:uppercase;text-align:center;margin-bottom:12px;}
+.section-label{font-family:'Montserrat',sans-serif;font-size:8px;font-weight:600;letter-spacing:0.25em;text-transform:uppercase;color:#aaa;margin:16px 0 6px;display:flex;align-items:center;gap:8px;}
+.section-label::after{content:'';flex:1;height:1px;background:#e0e0e0;}
+.cat-block{background:#fff;border:1px solid #e5e5e0;border-radius:4px;padding:10px 14px;margin-bottom:6px;}
+.cat-title{font-family:'Montserrat',sans-serif;font-size:8px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:#888;margin-bottom:6px;padding-bottom:4px;border-bottom:1px solid #f0f0ec;}
+.noms{display:grid;grid-template-columns:1fr 1fr;gap:1px 8px;}
+.noms.single{grid-template-columns:1fr;}
+.noms.three{grid-template-columns:1fr 1fr 1fr;}
+.nom{display:flex;align-items:center;gap:6px;padding:3px 4px;border-radius:3px;cursor:pointer;transition:background .1s;user-select:none;}
+.nom:hover{background:#f8f6f0;}
+.nom.selected{background:#f0ede6;}
+.radio{width:11px;height:11px;border-radius:50%;border:1.5px solid #bbb;flex-shrink:0;transition:all .15s;position:relative;}
+.nom.selected .radio{border-color:#1a1a1a;background:#1a1a1a;}
+.nom-label{font-size:11px;line-height:1.3;}
+.nom-label i{font-style:italic;color:#888;font-size:10px;}
+.submit-row{text-align:center;margin-top:20px;padding-top:16px;border-top:1px solid #e5e5e0;}
+.submit-row p{font-size:12px;color:#888;font-style:italic;margin-top:8px;}
+.lb-status{font-family:'Montserrat',sans-serif;font-size:9px;letter-spacing:0.15em;text-transform:uppercase;color:#c9a84c;text-align:center;margin-bottom:14px;}
+.lb-card{background:#fff;border:1px solid #e5e5e0;border-radius:4px;margin-bottom:6px;overflow:hidden;}
+.lb-row{display:flex;align-items:center;gap:12px;padding:10px 14px;}
+.lb-rank{font-family:'Playfair Display',serif;font-size:20px;font-weight:700;color:#ccc;width:28px;flex-shrink:0;text-align:center;}
+.lb-rank.top{color:#c9a84c;}
+.lb-name{font-size:15px;flex:1;}
+.lb-score{font-family:'Montserrat',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.08em;color:#1a1a1a;}
+.lb-bar{height:3px;background:#f0f0ec;}
+.lb-fill{height:100%;background:#1a1a1a;transition:width .5s;}
+.lb-empty{text-align:center;padding:30px;color:#aaa;font-style:italic;font-size:13px;}
+.lb-note{font-family:'Montserrat',sans-serif;font-size:8px;letter-spacing:0.12em;text-transform:uppercase;color:#bbb;text-align:center;margin-top:12px;}
+.admin-gate{text-align:center;padding:30px 20px;}
+.admin-gate p{font-size:13px;color:#888;font-style:italic;margin-bottom:12px;}
+.admin-gate input{font-family:'Montserrat',sans-serif;font-size:12px;padding:6px 12px;border:1px solid #ccc;border-radius:3px;margin-right:8px;letter-spacing:0.1em;}
+.admin-section{margin-bottom:20px;}
+.admin-cat{background:#fff;border:1px solid #e5e5e0;border-radius:4px;padding:10px 14px;margin-bottom:6px;}
+.admin-cat select{font-family:'EB Garamond',serif;font-size:12px;padding:3px 8px;border:1px solid #ccc;border-radius:3px;width:100%;margin-top:4px;}
+.admin-cat select:focus{outline:none;border-color:#1a1a1a;}
+.winner-set{font-size:10px;color:#c9a84c;font-family:'Montserrat',sans-serif;letter-spacing:0.08em;margin-top:3px;}
+.score-btn-row{text-align:center;margin-top:16px;display:flex;gap:8px;justify-content:center;}
+.config-panel{background:#fff;border:1px solid #e5e5e0;border-radius:4px;padding:16px;margin-bottom:12px;}
+.config-panel p{font-size:12px;color:#666;font-style:italic;margin-bottom:10px;line-height:1.6;}
+.config-panel textarea{width:100%;font-family:'Montserrat',sans-serif;font-size:10px;padding:8px;border:1px solid #ccc;border-radius:3px;height:160px;resize:vertical;}
+.config-panel textarea:focus{outline:none;border-color:#1a1a1a;}
+.config-status{font-family:'Montserrat',sans-serif;font-size:9px;letter-spacing:0.12em;text-transform:uppercase;margin-top:6px;}
+.config-status.ok{color:#4a9e6e;}
+.config-status.err{color:#c04040;}
+.debug-box{background:#fff8f0;border:1px solid #f0d9b5;border-radius:4px;padding:10px;margin-top:8px;font-family:'Montserrat',sans-serif;font-size:9px;color:#a06000;line-height:1.8;display:none;}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1a1a1a;color:#fff;font-family:'Montserrat',sans-serif;font-size:11px;letter-spacing:0.1em;padding:10px 20px;border-radius:4px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:999;}
+.toast.show{opacity:1;}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="hdr">
+    <h1>98th Academy Awards <em>@ The Pollocks</em></h1>
+    <div class="hdr-meta">March 15, 2026 · Live Ballot · Submit your picks before the show</div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('ballot',event)">My Ballot</button>
+    <button class="tab" onclick="switchTab('leaderboard',event)">Leaderboard</button>
+    <button class="tab" onclick="switchTab('admin',event)">Admin</button>
+    <button class="tab" onclick="switchTab('config',event)">⚙ Setup</button>
+  </div>
+
+  <div id="tab-ballot" class="panel active">
+    <div class="name-box" id="name-box">
+      <p>Enter your name to save your picks</p>
+      <div class="name-row">
+        <input type="text" id="name-input" placeholder="Your name" maxlength="30" onkeydown="if(event.key==='Enter')setName()">
+        <button class="btn" onclick="setName()">Go</button>
+      </div>
+    </div>
+    <div id="greeted" class="greeted" style="display:none"></div>
+    <div id="ballot-form">
+      <div class="section-label">Major Awards</div>
+      <div id="cats-major"></div>
+      <div class="section-label">Craft &amp; Technical</div>
+      <div id="cats-craft"></div>
+      <div class="section-label">Special Categories</div>
+      <div id="cats-special"></div>
+      <div class="submit-row">
+        <button class="btn gold" onclick="submitPicks()">Submit My Picks</button>
+        <p>You can resubmit any time before the show to update your picks.</p>
+      </div>
+    </div>
+  </div>
+
+  <div id="tab-leaderboard" class="panel">
+    <div class="lb-status" id="lb-status">Waiting for results — scores will appear after the show</div>
+    <div id="leaderboard-list"></div>
+    <div class="lb-note" id="lb-note"></div>
+  </div>
+
+  <div id="tab-admin" class="panel">
+    <div id="admin-gate">
+      <div class="admin-gate">
+        <p>Enter the admin password to enter winners and trigger scoring.</p>
+        <input type="password" id="admin-pw" placeholder="Password" onkeydown="if(event.key==='Enter')checkAdmin()">
+        <button class="btn" onclick="checkAdmin()">Enter</button>
+      </div>
+    </div>
+    <div id="admin-panel" style="display:none">
+      <div class="section-label">Enter Winners</div>
+      <div id="admin-cats"></div>
+      <div class="score-btn-row">
+        <button class="btn gold" onclick="saveWinners()">Save Winners &amp; Score</button>
+        <button class="btn sec" onclick="document.getElementById('admin-panel').style.display='none';document.getElementById('admin-gate').style.display='block'">Lock</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="tab-config" class="panel">
+    <div class="config-panel">
+      <p>Paste your Firebase config object below (the <code>firebaseConfig = { ... }</code> block from the Firebase console). Once saved, all picks and scores will sync live across everyone's devices.</p>
+      <textarea id="config-input" placeholder='Paste your firebaseConfig here, e.g.:
+{
+  "apiKey": "AIza...",
+  "authDomain": "...",
+  "databaseURL": "https://....firebaseio.com",
+  "projectId": "...",
+  "storageBucket": "...",
+  "messagingSenderId": "...",
+  "appId": "..."
+}'></textarea>
+      <button class="btn" onclick="saveConfig()" style="margin-top:8px;">Save &amp; Connect</button>
+      <div id="config-status" class="config-status"></div>
+      <div id="debug-box" class="debug-box"></div>
+    </div>
+    <div class="config-panel">
+      <p><strong>Admin password</strong> — set a simple password so only you can enter winners after the show.</p>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <input type="text" id="pw-input" placeholder="Set admin password" style="font-family:'Montserrat',sans-serif;font-size:12px;padding:6px 10px;border:1px solid #ccc;border-radius:3px;flex:1;">
+        <button class="btn" onclick="savePw()">Save</button>
+      </div>
+      <div id="pw-status" class="config-status"></div>
+    </div>
+  </div>
+
+</div>
+<div class="toast" id="toast"></div>
+
+<script type="module">
+const CATEGORIES = {
+  major: [
+    { id:'picture', label:'Best Picture', nominees:['Bugonia','F1','Frankenstein','Hamnet','Marty Supreme','One Battle After Another','The Secret Agent','Sentimental Value','Sinners','Train Dreams'] },
+    { id:'director', label:'Best Director', nominees:['Chloé Zhao — Hamnet','Josh Safdie — Marty Supreme','Paul Thomas Anderson — One Battle','Joachim Trier — Sentimental Value','Ryan Coogler — Sinners'] },
+    { id:'actor', label:'Best Actor', nominees:['Timothée Chalamet — Marty Supreme','Leonardo DiCaprio — One Battle','Ethan Hawke — Blue Moon','Michael B. Jordan — Sinners','Wagner Moura — The Secret Agent'] },
+    { id:'actress', label:'Best Actress', nominees:['Jessie Buckley — Hamnet','Rose Byrne — If I Had Legs I\'d Kick You','Kate Hudson — Song Sung Blue','Renate Reinsve — Sentimental Value','Emma Stone — Bugonia'] },
+    { id:'supp_actor', label:'Best Supporting Actor', nominees:['Benicio Del Toro — One Battle','Jacob Elordi — Frankenstein','Delroy Lindo — Sinners','Sean Penn — One Battle','Stellan Skarsgård — Sentimental Value'] },
+    { id:'supp_actress', label:'Best Supporting Actress', nominees:['Elle Fanning — Sentimental Value','Inga Ibsdotter Lilleaas — Sentimental Value','Amy Madigan — Weapons','Wunmi Mosaku — Sinners','Teyana Taylor — One Battle'] },
+  ],
+  craft: [
+    { id:'adapted', label:'Adapted Screenplay', nominees:['Bugonia — Will Tracy','Frankenstein — Del Toro','Hamnet — O\'Farrell & Zhao','One Battle — PTA','Train Dreams — Bentley & Kwedar'] },
+    { id:'original', label:'Original Screenplay', nominees:['Blue Moon — Kaplow','It Was Just an Accident — Panahi','Marty Supreme — Bronstein & Safdie','Sentimental Value — Trier & Vogt','Sinners — Ryan Coogler'] },
+    { id:'cinematography', label:'Cinematography', nominees:['Frankenstein','Marty Supreme','One Battle After Another','Sinners','Train Dreams'] },
+    { id:'editing', label:'Film Editing', nominees:['F1 — Mirrione','Marty Supreme — Bronstein & Safdie','One Battle — Jurgensen','Sentimental Value — Bugge Coutté','Sinners — Shawver'] },
+    { id:'production', label:'Production Design', nominees:['Frankenstein','Hamnet','Marty Supreme','One Battle After Another','Sinners'] },
+    { id:'costume', label:'Costume Design', nominees:['Avatar: Fire & Ash — Scott','Frankenstein — Hawley','Hamnet — Turzanska','Marty Supreme — Bellizzi','Sinners — Ruth E. Carter'] },
+    { id:'score', label:'Original Score', nominees:['Bugonia — Fendrix','Frankenstein — Desplat','Hamnet — Max Richter','One Battle — Jonny Greenwood','Sinners — Ludwig Göransson'] },
+    { id:'song', label:'Original Song', nominees:['"Dear Me" — Diane Warren','"Golden" — KPop Demon Hunters','"I Lied to You" — Sinners','"Sweet Dreams of Joy" — Viva Verdi!','"Train Dreams" — Train Dreams'] },
+    { id:'makeup', label:'Makeup & Hair', nominees:['Frankenstein','Kokuho','Sinners','The Smashing Machine','The Ugly Stepsister'] },
+    { id:'sound', label:'Sound', nominees:['F1','Frankenstein','One Battle After Another','Sinners','Sirât'] },
+    { id:'vfx', label:'Visual Effects', nominees:['Avatar: Fire and Ash','F1','Jurassic World Rebirth','The Lost Bus','Sinners'] },
+    { id:'casting', label:'Casting ★', nominees:['Hamnet — Nina Gold','Marty Supreme — Venditti','One Battle — Kulukundis','The Secret Agent — Domingues','Sinners — Francine Maisler'] },
+  ],
+  special: [
+    { id:'animated', label:'Animated Feature', nominees:['Arco','Elio','KPop Demon Hunters','Little Amélie…','Zootopia 2'] },
+    { id:'intl', label:'International Feature', nominees:['The Secret Agent (Brazil)','It Was Just an Accident (France)','Sentimental Value (Norway)','Sirât (Spain)','The Voice of Hind Rajab (Tunisia)'] },
+    { id:'doc_feature', label:'Documentary Feature', nominees:['The Alabama Solution','Come See Me in the Good Light','Cutting Through Rocks','Mr. Nobody Against Putin','The Perfect Neighbor'] },
+    { id:'animated_short', label:'Animated Short', nominees:['Butterfly','Forevergreen','The Girl Who Cried Pearls','Retirement Plan','The Three Sisters'] },
+    { id:'doc_short', label:'Documentary Short', nominees:['All the Empty Rooms','Armed Only with a Camera','Children No More','The Devil is Busy','Perfectly a Strangeness'] },
+    { id:'live_short', label:'Live Action Short', nominees:['Butcher\'s Stain','Jane Austen\'s Period Drama','A Friend of Dorothy','The Singers','Two People Exchanging Saliva'] },
+  ]
+};
+
+const ALL_CATS = [...CATEGORIES.major, ...CATEGORIES.craft, ...CATEGORIES.special];
+
+let db = null;
+let userName = localStorage.getItem('oscars_name') || '';
+let picks = JSON.parse(localStorage.getItem('oscars_picks') || '{}');
+let winners = {};
+const ADMIN_PW_KEY = 'oscars_admin_pw';
+const CONFIG_KEY = 'oscars_firebase_config';
+
+// ── PARSE CONFIG — handles every common paste format ──────────────
+function parseFirebaseConfig(raw) {
+  const debug = [];
+
+  // Step 1: extract the { ... } block
+  const match = raw.match(/\{[\s\S]*\}/);
+  if (!match) throw new Error('No { } block found in what you pasted.');
+  debug.push('✓ Found { } block');
+  let str = match[0];
+
+  // Step 2: remove JS comments (// and /* */)
+  str = str.replace(/\/\/[^\n]*/g, '').replace(/\/\*[\s\S]*?\*\//g, '');
+
+  // Step 3: normalize — replace single quotes with double quotes
+  str = str.replace(/'/g, '"');
+
+  // Step 4: quote any unquoted keys (e.g. apiKey: → "apiKey":)
+  str = str.replace(/([{,]\s*)([a-zA-Z_][a-zA-Z0-9_]*)(\s*:)/g, '$1"$2"$3');
+
+  // Step 5: remove trailing commas before } or ]
+  str = str.replace(/,(\s*[}\]])/g, '$1');
+
+  debug.push('✓ Cleaned up formatting');
+
+  // Step 6: parse
+  let config;
+  try {
+    config = JSON.parse(str);
+    debug.push('✓ Parsed successfully');
+  } catch(e) {
+    debug.push('✗ JSON.parse failed: ' + e.message);
+    showDebug(debug);
+    throw new Error('Could not parse config after cleanup. See details below.');
+  }
+
+  // Step 7: validate required fields
+  const required = ['apiKey','authDomain','projectId','appId'];
+  const missing = required.filter(k => !config[k]);
+  if (missing.length) {
+    debug.push('✗ Missing fields: ' + missing.join(', '));
+    showDebug(debug);
+    throw new Error('Missing required fields: ' + missing.join(', '));
+  }
+  debug.push('✓ Required fields present');
+
+  if (!config.databaseURL) {
+    debug.push('⚠ No databaseURL — Realtime Database will not work');
+  } else {
+    debug.push('✓ databaseURL present');
+  }
+
+  showDebug(debug);
+  return config;
+}
+
+function showDebug(lines) {
+  const box = document.getElementById('debug-box');
+  box.style.display = 'block';
+  box.innerHTML = '<strong>Parse log:</strong><br>' + lines.join('<br>');
+}
+
+// ── RENDER BALLOT ─────────────────────────────────────────────────
+function renderBallot() {
+  ['major','craft','special'].forEach(section => {
+    const el = document.getElementById(`cats-${section}`);
+    el.innerHTML = '';
+    CATEGORIES[section].forEach(cat => {
+      const block = document.createElement('div');
+      block.className = 'cat-block';
+      const cols = cat.nominees.length > 5 ? 'three' : '';
+      block.innerHTML = `<div class="cat-title">${cat.label}</div>
+        <div class="noms ${cols}" id="noms-${cat.id}"></div>`;
+      el.appendChild(block);
+      const container = document.getElementById(`noms-${cat.id}`);
+      cat.nominees.forEach(nom => {
+        const parts = nom.split(' — ');
+        const label = parts.length > 1
+          ? `${parts[0]} <i>${parts.slice(1).join(' — ')}</i>`
+          : nom;
+        const div = document.createElement('div');
+        div.className = 'nom' + (picks[cat.id] === nom ? ' selected' : '');
+        div.innerHTML = `<div class="radio"></div><span class="nom-label">${label}</span>`;
+        div.onclick = () => selectNom(cat.id, nom, div);
+        container.appendChild(div);
+      });
+    });
+  });
+}
+
+function selectNom(catId, nom, el) {
+  document.querySelectorAll(`#noms-${catId} .nom`).forEach(n => n.classList.remove('selected'));
+  el.classList.add('selected');
+  picks[catId] = nom;
+  localStorage.setItem('oscars_picks', JSON.stringify(picks));
+}
+
+function setName() {
+  const v = document.getElementById('name-input').value.trim();
+  if (!v) return;
+  userName = v;
+  localStorage.setItem('oscars_name', v);
+  document.getElementById('name-box').style.display = 'none';
+  const g = document.getElementById('greeted');
+  g.style.display = 'block';
+  g.textContent = `Picking as: ${v}`;
+}
+window.setName = setName;
+
+async function submitPicks() {
+  if (!userName) { toast('Enter your name first'); return; }
+  const total = ALL_CATS.length;
+  const filled = Object.keys(picks).length;
+  if (filled < total) {
+    if (!confirm(`You've picked ${filled}/${total} categories. Submit anyway?`)) return;
+  }
+  if (db) {
+    try {
+      const { ref, set } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js');
+      await set(ref(db, `picks/${userName.replace(/[.#$[\]]/g,'_')}`), {
+        name: userName, picks, submitted: Date.now(), score: null
+      });
+      toast('Picks saved! ✓');
+    } catch(e) { toast('Error saving — check config'); console.error(e); }
+  } else {
+    toast('No Firebase connected — picks saved locally only');
+  }
+}
+window.submitPicks = submitPicks;
+
+async function loadLeaderboard() {
+  const el = document.getElementById('leaderboard-list');
+  const note = document.getElementById('lb-note');
+  if (!db) {
+    el.innerHTML = '<div class="lb-empty">Connect Firebase in ⚙ Setup to see live picks.</div>';
+    return;
+  }
+  try {
+    const { ref, onValue } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js');
+    onValue(ref(db, 'picks'), snap => {
+      const data = snap.val() || {};
+      const entries = Object.values(data);
+      if (!entries.length) { el.innerHTML = '<div class="lb-empty">No picks submitted yet.</div>'; return; }
+      const hasScores = entries.some(e => e.score !== null && e.score !== undefined);
+      document.getElementById('lb-status').textContent = hasScores ? '🏆 Final scores' : 'Picks submitted — scores will show after the show';
+      entries.sort((a,b) => (b.score||0) - (a.score||0));
+      const max = Math.max(...entries.map(e => e.score||0), 1);
+      el.innerHTML = entries.map((e,i) => `
+        <div class="lb-card">
+          <div class="lb-row">
+            <div class="lb-rank ${i<3?'top':''}">${i+1}</div>
+            <div class="lb-name">${e.name}</div>
+            <div class="lb-score">${e.score !== null && e.score !== undefined ? e.score+' pts' : `${Object.keys(e.picks||{}).length}/${ALL_CATS.length} picks`}</div>
+          </div>
+          ${hasScores?`<div class="lb-bar"><div class="lb-fill" style="width:${Math.round((e.score||0)/max*100)}%"></div></div>`:''}
+        </div>`).join('');
+      note.textContent = hasScores ? `${entries.length} players · ${ALL_CATS.length} categories` : `${entries.length} players have submitted picks`;
+    });
+  } catch(e) { el.innerHTML = '<div class="lb-empty">Error loading — check Firebase config.</div>'; }
+}
+
+function checkAdmin() {
+  const pw = document.getElementById('admin-pw').value;
+  const stored = localStorage.getItem(ADMIN_PW_KEY) || 'pollocks2026';
+  if (pw === stored) {
+    document.getElementById('admin-gate').style.display = 'none';
+    document.getElementById('admin-panel').style.display = 'block';
+    renderAdminCats();
+  } else { toast('Wrong password'); }
+}
+window.checkAdmin = checkAdmin;
+
+function renderAdminCats() {
+  const el = document.getElementById('admin-cats');
+  el.innerHTML = ALL_CATS.map(cat => `
+    <div class="admin-cat">
+      <div class="cat-title">${cat.label}</div>
+      <select id="winner-${cat.id}" onchange="markWinner('${cat.id}',this.value)">
+        <option value="">— select winner —</option>
+        ${cat.nominees.map(n=>`<option value="${n}" ${winners[cat.id]===n?'selected':''}>${n}</option>`).join('')}
+      </select>
+      ${winners[cat.id]?`<div class="winner-set">✓ ${winners[cat.id]}</div>`:''}
+    </div>`).join('');
+}
+
+function markWinner(catId, val) { winners[catId] = val; }
+window.markWinner = markWinner;
+
+async function saveWinners() {
+  if (!db) { toast('Connect Firebase first'); return; }
+  try {
+    const { ref, set, get } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js');
+    await set(ref(db, 'winners'), winners);
+    const snap = await get(ref(db, 'picks'));
+    const allPicks = snap.val() || {};
+    for (const [key, entry] of Object.entries(allPicks)) {
+      let score = 0;
+      ALL_CATS.forEach(cat => { if (winners[cat.id] && entry.picks?.[cat.id] === winners[cat.id]) score++; });
+      await set(ref(db, `picks/${key}/score`), score);
+    }
+    toast(`Winners saved · ${Object.keys(winners).length} categories scored`);
+    renderAdminCats();
+  } catch(e) { toast('Error saving winners'); console.error(e); }
+}
+window.saveWinners = saveWinners;
+
+async function saveConfig() {
+  const raw = document.getElementById('config-input').value.trim();
+  const status = document.getElementById('config-status');
+  document.getElementById('debug-box').style.display = 'none';
+
+  if (!raw) {
+    status.className = 'config-status err';
+    status.textContent = '✗ Nothing pasted — paste your Firebase config first';
+    return;
+  }
+
+  let config;
+  try {
+    config = parseFirebaseConfig(raw);
+  } catch(e) {
+    status.className = 'config-status err';
+    status.textContent = '✗ ' + e.message;
+    return;
+  }
+
+  try {
+    localStorage.setItem(CONFIG_KEY, JSON.stringify(config));
+    status.className = 'config-status ok';
+    status.textContent = '✓ Config saved — connecting to Firebase…';
+    await initFirebase(config);
+    status.textContent = '✓ Connected to Firebase successfully';
+    toast('Firebase connected!');
+  } catch(e) {
+    status.className = 'config-status err';
+    status.textContent = '✗ Config parsed OK but Firebase rejected it: ' + e.message;
+    console.error(e);
+  }
+}
+window.saveConfig = saveConfig;
+
+function savePw() {
+  const v = document.getElementById('pw-input').value.trim();
+  if (!v) return;
+  localStorage.setItem(ADMIN_PW_KEY, v);
+  document.getElementById('pw-status').className = 'config-status ok';
+  document.getElementById('pw-status').textContent = '✓ Password saved';
+}
+window.savePw = savePw;
+
+async function initFirebase(config) {
+  const { initializeApp, getApps, deleteApp } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js');
+  const { getDatabase } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js');
+  // delete any existing app instance to avoid "already exists" error on re-connect
+  const existing = getApps().find(a => a.name === 'oscars-app');
+  if (existing) await deleteApp(existing);
+  const app = initializeApp(config, 'oscars-app');
+  db = getDatabase(app);
+  const { ref, get } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js');
+  const snap = await get(ref(db, 'winners'));
+  if (snap.val()) winners = snap.val();
+}
+
+function switchTab(name, e) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  e.target.classList.add('active');
+  document.getElementById(`tab-${name}`).classList.add('active');
+  if (name === 'leaderboard') loadLeaderboard();
+}
+window.switchTab = switchTab;
+
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+(async () => {
+  renderBallot();
+  if (userName) {
+    document.getElementById('name-box').style.display = 'none';
+    const g = document.getElementById('greeted');
+    g.style.display = 'block';
+    g.textContent = `Picking as: ${userName}`;
+    document.getElementById('name-input').value = userName;
+  }
+  const storedConfig = localStorage.getItem(CONFIG_KEY);
+  if (storedConfig) {
+    try {
+      await initFirebase(JSON.parse(storedConfig));
+      document.getElementById('config-status').className = 'config-status ok';
+      document.getElementById('config-status').textContent = '✓ Connected';
+    } catch(e) {
+      document.getElementById('config-status').className = 'config-status err';
+      document.getElementById('config-status').textContent = '✗ Reconnect failed — re-paste your config';
+    }
+  }
+})();
+</script>
+</body>
+</html>
