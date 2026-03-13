@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Oscars @ The Pollocks</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Montserrat:wght@300;400;500;600&display=swap');
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{--gold:#c9a84c;--gold2:#e8c96a;--bg:#0a0a0b;--bg2:#111113;--bg3:#18181b;--border:#222226;--text:#f0ede6;--muted:#aaa;--dim:#555;}
+body{background:var(--bg);color:var(--text);font-family:'Montserrat',sans-serif;min-height:100vh;}
+
+.hdr{text-align:center;padding:32px 20px 0;}
+.hdr-rule{width:48px;height:1px;background:var(--gold);margin:0 auto 14px;}
+.hdr h1{font-family:'Playfair Display',serif;font-size:26px;font-weight:700;}
+.hdr h1 em{display:block;font-style:italic;font-weight:400;font-size:16px;color:var(--gold);margin-top:3px;}
+.hdr-meta{font-size:8px;letter-spacing:.28em;text-transform:uppercase;color:var(--muted);margin-top:8px;padding-bottom:20px;}
+
+.top-tabs{display:flex;justify-content:center;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--bg);z-index:200;padding:0 20px;}
+.top-tab{font-size:9px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;padding:13px 18px;cursor:pointer;border:none;background:none;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .2s;}
+.top-tab.active{color:var(--gold);border-bottom-color:var(--gold);}
+.top-tab:hover{color:var(--text);}
+
+.sec-tabs{display:flex;justify-content:center;gap:4px;padding:16px 20px 0;}
+.sec-tab{font-size:8px;font-weight:600;letter-spacing:.15em;text-transform:uppercase;padding:7px 16px;cursor:pointer;border:1px solid var(--border);background:none;color:var(--muted);border-radius:20px;transition:all .2s;}
+.sec-tab.active{background:var(--gold);color:#1a1200;border-color:var(--gold);}
+.sec-tab:hover:not(.active){color:var(--text);border-color:var(--dim);}
+
+.panel{display:none;padding:0 16px 60px;max-width:960px;margin:0 auto;}
+.panel.active{display:block;}
+.sec-panel{display:none;}
+.sec-panel.active{display:block;}
+
+.name-box{background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:22px;margin:16px 0;text-align:center;}
+.name-box p{font-size:11px;color:var(--muted);margin-bottom:12px;font-style:italic;}
+.name-row{display:flex;gap:8px;justify-content:center;}
+.name-row input{font-family:'Playfair Display',serif;font-size:15px;padding:8px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:4px;color:var(--text);width:200px;}
+.name-row input:focus{outline:none;border-color:var(--gold);}
+.greeted{font-size:8px;color:var(--muted);letter-spacing:.15em;text-transform:uppercase;text-align:center;margin:10px 0 0;}
+
+.btn{font-family:'Montserrat',sans-serif;font-size:9px;font-weight:600;letter-spacing:.15em;text-transform:uppercase;padding:9px 20px;border:none;border-radius:3px;cursor:pointer;transition:all .2s;}
+.btn-primary{background:var(--text);color:var(--bg);}
+.btn-primary:hover{background:#fff;}
+.btn-gold{background:linear-gradient(135deg,var(--gold),var(--gold2));color:#1a1200;}
+.btn-gold:hover{opacity:.9;}
+.btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--border);}
+.btn-ghost:hover{color:var(--text);}
+
+.cat-block{margin-bottom:28px;}
+.cat-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--border);}
+.cat-title{font-size:9px;font-weight:600;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);}
+.cat-picked{font-size:10px;color:var(--gold);font-style:italic;font-family:'Playfair Display',serif;}
+
+.img-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;}
+.img-grid.five-col{grid-template-columns:repeat(5,1fr);}
+.img-tile{border-radius:6px;overflow:hidden;cursor:pointer;border:2px solid transparent;transition:border-color .2s,transform .15s;background:var(--bg3);display:flex;flex-direction:column;position:relative;}
+.img-tile:hover{transform:translateY(-3px);}
+.img-tile.selected{border-color:var(--gold);}
+/* FIX: increased ratio from 130% to 150% so poster bottoms aren't clipped */
+.img-wrap{position:relative;padding-top:150%;overflow:hidden;background:var(--bg3);flex-shrink:0;}
+.img-wrap img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center top;transition:opacity .4s;opacity:0;}
+.img-wrap img.loaded{opacity:1;}
+.img-placeholder{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:12px;transition:opacity .3s;}
+.img-placeholder.hidden{opacity:0;pointer-events:none;}
+.img-placeholder-icon{font-size:28px;opacity:.4;}
+.img-placeholder-text{font-size:9px;color:#ccc;text-align:center;line-height:1.4;}
+.img-check{position:absolute;top:7px;right:7px;width:22px;height:22px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .2s;font-size:12px;color:#1a1200;font-weight:700;z-index:2;}
+.img-tile.selected .img-check{opacity:1;}
+.img-info{padding:8px 9px 7px;background:var(--bg2);}
+.img-title{font-family:'Playfair Display',serif;font-size:12px;line-height:1.3;color:#f0ede6;}
+.img-tile.selected .img-title{color:var(--gold);}
+.img-sub{font-size:9px;color:#bbb;line-height:1.3;margin-top:2px;}
+.img-meta{font-size:9px;color:var(--muted);line-height:1.4;margin-top:3px;}
+.img-link{display:inline-block;font-size:8px;letter-spacing:.06em;color:#e8c96a;border-bottom:1px solid #e8c96a;margin-top:5px;transition:color .15s;text-decoration:none;}
+.img-tile:hover .img-link{color:#fff;border-bottom-color:#fff;}
+
+.submit-row{text-align:center;margin-top:28px;padding-top:20px;border-top:1px solid var(--border);}
+.submit-row p{font-size:11px;color:var(--muted);font-style:italic;margin-top:8px;}
+.progress-wrap{display:flex;align-items:center;gap:10px;justify-content:center;margin-bottom:16px;}
+.progress-bar{width:180px;height:2px;background:var(--border);border-radius:2px;overflow:hidden;}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--gold),var(--gold2));transition:width .4s;}
+.progress-label{font-size:9px;color:var(--muted);letter-spacing:.1em;}
+
+.lb-header{text-align:center;padding:24px 0 20px;}
+.lb-title{font-family:'Playfair Display',serif;font-size:24px;margin-bottom:6px;}
+.lb-status{font-size:8px;letter-spacing:.22em;text-transform:uppercase;color:var(--gold);}
+.lb-podium{display:grid;grid-template-columns:1fr 1.2fr 1fr;gap:8px;margin-bottom:18px;align-items:end;}
+.podium-card{background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:18px 10px;text-align:center;position:relative;overflow:hidden;}
+.podium-card.first{border-color:var(--gold);background:#130f00;}
+.podium-card.first::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--gold),var(--gold2));}
+.podium-rank{font-family:'Playfair Display',serif;font-size:30px;font-weight:700;color:var(--dim);}
+.podium-card.first .podium-rank{color:var(--gold);}
+.podium-name{font-family:'Playfair Display',serif;font-size:14px;margin:6px 0 4px;}
+.podium-score{font-size:10px;font-weight:600;color:var(--muted);}
+.podium-card.first .podium-score{color:var(--gold);}
+.lb-list{display:flex;flex-direction:column;gap:4px;}
+.lb-row{background:var(--bg2);border:1px solid var(--border);border-radius:5px;display:flex;align-items:center;gap:14px;padding:13px 16px;position:relative;overflow:hidden;}
+.lb-bg{position:absolute;left:0;top:0;bottom:0;background:rgba(201,168,76,.06);transition:width .6s;}
+.lb-rank{font-family:'Playfair Display',serif;font-size:18px;font-weight:700;color:var(--dim);width:24px;text-align:center;flex-shrink:0;position:relative;}
+.lb-name{font-family:'Playfair Display',serif;font-size:15px;flex:1;position:relative;color:#f0ede6;}
+.lb-meta{font-size:9px;color:var(--muted);position:relative;}
+.lb-pts{font-size:12px;font-weight:600;color:var(--gold);position:relative;}
+.lb-empty{text-align:center;padding:50px;color:var(--muted);font-style:italic;font-size:13px;}
+.lb-note{font-size:8px;letter-spacing:.15em;text-transform:uppercase;color:var(--dim);text-align:center;margin-top:14px;}
+
+.admin-gate{text-align:center;padding:40px 20px;}
+.admin-gate p{font-size:12px;color:var(--muted);font-style:italic;margin-bottom:14px;}
+.admin-input{font-family:'Montserrat',sans-serif;font-size:12px;padding:7px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:3px;color:var(--text);}
+.admin-input:focus{outline:none;border-color:var(--gold);}
+.admin-cat{background:var(--bg2);border:1px solid var(--border);border-radius:5px;padding:10px 14px;margin-bottom:6px;}
+.admin-cat select{font-family:'Montserrat',sans-serif;font-size:11px;padding:5px 8px;background:var(--bg3);border:1px solid var(--border);border-radius:3px;color:var(--text);width:100%;margin-top:5px;}
+.admin-cat select:focus{outline:none;border-color:var(--gold);}
+.winner-set{font-size:9px;color:var(--gold);letter-spacing:.08em;margin-top:4px;}
+.score-btn-row{text-align:center;margin-top:18px;display:flex;gap:8px;justify-content:center;}
+
+.config-panel{background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:18px;margin-bottom:12px;}
+.config-panel p{font-size:12px;color:var(--muted);font-style:italic;margin-bottom:10px;line-height:1.6;}
+.config-panel textarea{width:100%;font-family:'Montserrat',sans-serif;font-size:10px;padding:8px;background:var(--bg3);border:1px solid var(--border);border-radius:3px;color:var(--text);height:130px;resize:vertical;}
+.config-panel textarea:focus{outline:none;border-color:var(--gold);}
+.config-status{font-size:9px;letter-spacing:.1em;text-transform:uppercase;margin-top:6px;}
+.config-status.ok{color:#4a9e6e;}.config-status.err{color:#c04040;}
+
+.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:var(--text);color:var(--bg);font-size:11px;font-weight:700;letter-spacing:.1em;padding:10px 24px;border-radius:4px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:999;}
+.toast.show{opacity:1;}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="hdr-rule"></div>
+  <h1>98th Academy Awards Ballot</h1>
+  <div class="hdr-meta" style="margin-top:8px;">
+    March 15, 2026 &nbsp;·&nbsp; Submit your picks before the show
+  </div>
+  <div style="margin-top:10px;padding-bottom:20px;">
+    <a href="https://letterboxd.com/dilholdilitant/" target="_blank" rel="noreferrer" style="display:inline-flex;align-items:center;gap:6px;text-decoration:none;opacity:.6;transition:opacity .2s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=.6">
+      <span style="font-size:8px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);font-family:'Montserrat',sans-serif;">from</span>
+      <span style="font-size:10px;line-height:1;letter-spacing:-.5px;">🟠🟢🔵</span>
+      <span style="font-size:9px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--text);font-family:'Montserrat',sans-serif;">dilholdilitant</span>
+    </a>
+  </div>
+</div>
+
+
+<div class="top-tabs">
+  <button class="top-tab active" onclick="switchTop('ballot',event)">My Ballot</button>
+  <button class="top-tab" onclick="switchTop('leaderboard',event)">Leaderboard</button>
+  <button class="top-tab" onclick="switchTop('admin',event)">Admin</button>
+  <button class="top-tab" onclick="switchTop('config',event)">⚙</button>
+</div>
+
+<div id="tab-ballot" class="panel active">
+  <div class="name-box" id="name-box">
+    <p>Enter your name to save your picks</p>
+    <div class="name-row">
+      <input type="text" id="name-input" placeholder="Your name" maxlength="30" onkeydown="if(event.key==='Enter')setName()">
+      <button class="btn btn-primary" onclick="setName()">Go</button>
+    </div>
+  </div>
+  <div id="greeted" class="greeted" style="display:none"></div>
+  <div class="sec-tabs">
+    <button class="sec-tab active" onclick="switchSec('major',event)">Major Awards</button>
+    <button class="sec-tab" onclick="switchSec('craft',event)">Craft &amp; Technical</button>
+    <button class="sec-tab" onclick="switchSec('special',event)">Special</button>
+  </div>
+  <div style="padding-top:20px;">
+    <div id="sec-major" class="sec-panel active"></div>
+    <div id="sec-craft" class="sec-panel"></div>
+    <div id="sec-special" class="sec-panel"></div>
+  </div>
+  <div class="submit-row">
+    <div class="progress-wrap">
+      <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+      <div class="progress-label" id="progress-label">0 / 18 picked</div>
+    </div>
+    <button class="btn btn-gold" onclick="submitPicks()">Submit My Picks</button>
+    <p>You can resubmit any time before the show to update your picks.</p>
+  </div>
+</div>
+
+<div id="tab-leaderboard" class="panel">
+  <div class="lb-header">
+    <div class="lb-title">The Board</div>
+    <div class="lb-status" id="lb-status">Waiting for results</div>
+  </div>
+  <div id="lb-podium" class="lb-podium" style="display:none"></div>
+  <div id="leaderboard-list" class="lb-list"></div>
+  <div class="lb-note" id="lb-note"></div>
+</div>
+
+<div id="tab-admin" class="panel">
+  <div id="admin-gate">
+    <div class="admin-gate">
+      <p>Admin password to enter winners and score ballots.</p>
+      <input class="admin-input" type="password" id="admin-pw" placeholder="Password" onkeydown="if(event.key==='Enter')checkAdmin()" style="margin-right:8px;">
+      <button class="btn btn-primary" onclick="checkAdmin()">Enter</button>
+    </div>
+  </div>
+  <div id="admin-panel" style="display:none">
+    <div style="font-size:8px;font-weight:600;letter-spacing:.3em;text-transform:uppercase;color:var(--dim);margin:20px 0 12px;display:flex;align-items:center;gap:10px;">
+      <span style="flex:1;height:1px;background:var(--border);display:block"></span>Enter Winners<span style="flex:1;height:1px;background:var(--border);display:block"></span>
+    </div>
+    <div id="admin-cats"></div>
+    <div class="score-btn-row">
+      <button class="btn btn-gold" onclick="saveWinners()">Save Winners &amp; Score</button>
+      <button class="btn btn-ghost" onclick="document.getElementById('admin-panel').style.display='none';document.getElementById('admin-gate').style.display='block'">Lock</button>
+    </div>
+  </div>
+</div>
+
+<div id="tab-config" class="panel">
+  <div class="config-panel" style="margin-top:16px;">
+    <p>Firebase config — paste your config object to sync picks live.</p>
+    <textarea id="config-input" placeholder="Paste firebaseConfig { ... } here"></textarea>
+    <button class="btn btn-primary" onclick="saveConfig()" style="margin-top:8px;">Save &amp; Connect</button>
+    <div id="config-status" class="config-status"></div>
+  </div>
+  <div class="config-panel">
+    <p><strong style="color:var(--text)">Admin password</strong></p>
+    <div style="display:flex;gap:8px;">
+      <input class="admin-input" type="text" id="pw-input" placeholder="Set password" style="flex:1;">
+      <button class="btn btn-primary" onclick="savePw()">Save</button>
+    </div>
+    <div id="pw-status" class="config-status"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyBXv5U_rwzAApfGula17vqv559hlSr715k",
+  authDomain: "pollocksoscars2026.firebaseapp.com",
+  databaseURL: "https://pollocksoscars2026-default-rtdb.firebaseio.com",
+  projectId: "pollocksoscars2026",
+  storageBucket: "pollocksoscars2026.firebasestorage.app",
+  messagingSenderId: "1095696660034",
+  appId: "1:1095696660034:web:776721f5d3dc23feba1fdb"
+};
+
+// ─── TMDB ──────────────────────────────────────────────────────────
+const TMDB_KEY = '2dca580c2a14b55200e784d157207b4d';
+const TMDB_IMG = 'https://image.tmdb.org/t/p/w500';
+
+// Direct image overrides — removed all Wikipedia URLs (unreliable).
+// Shorts now resolved via confirmed TMDB movie IDs in TMDB_LOOKUP below.
+const DIRECT_IMGS = {};
+
+const TMDB_LOOKUP = {
+  'Bugonia':                          {type:'movie',  query:'Bugonia', year:2025},
+  'F1':                               {type:'movie',  query:'F1', year:2025},
+  'Frankenstein':                     {type:'movie',  query:'Frankenstein', year:2025},
+  'Hamnet':                           {type:'movie',  query:'Hamnet', year:2025},
+  'Marty Supreme':                    {type:'movie',  query:'Marty Supreme', year:2025},
+  'One Battle After Another':         {type:'movie',  query:'One Battle After Another', year:2025},
+  'The Secret Agent':                 {type:'movie',  query:'The Secret Agent', year:2025},
+  'Sentimental Value':                {type:'movie',  query:'Sentimental Value', year:2025},
+  'Sinners':                          {type:'movie',  query:'Sinners', year:2025},
+  'Train Dreams':                     {type:'movie',  query:'Train Dreams', year:2025},
+  'Chloé Zhao — Hamnet':              {type:'person', query:'Chloé Zhao'},
+  'Josh Safdie — Marty Supreme':      {type:'person', query:'Josh Safdie'},
+  'Paul Thomas Anderson — One Battle':{type:'person', query:'Paul Thomas Anderson'},
+  'Joachim Trier — Sentimental Value':{type:'person', query:'Joachim Trier'},
+  'Ryan Coogler — Sinners':           {type:'person', query:'Ryan Coogler'},
+  'Timothée Chalamet — Marty Supreme':{type:'person', query:'Timothée Chalamet'},
+  'Leonardo DiCaprio — One Battle':   {type:'person', query:'Leonardo DiCaprio'},
+  'Ethan Hawke — Blue Moon':          {type:'person', query:'Ethan Hawke'},
+  'Michael B. Jordan — Sinners':      {type:'person', query:'Michael B. Jordan'},
+  'Wagner Moura — The Secret Agent':  {type:'person', query:'Wagner Moura'},
+  'Jessie Buckley — Hamnet':                    {type:'person', query:'Jessie Buckley'},
+  "Rose Byrne — If I Had Legs I'd Kick You":    {type:'person', query:'Rose Byrne'},
+  'Kate Hudson — Song Sung Blue':               {type:'person', query:'Kate Hudson'},
+  'Renate Reinsve — Sentimental Value':         {type:'person', query:'Renate Reinsve'},
+  'Emma Stone — Bugonia':                       {type:'person', query:'Emma Stone'},
+  'Benicio Del Toro — One Battle':    {type:'person', query:'Benicio Del Toro'},
+  'Jacob Elordi — Frankenstein':      {type:'person', query:'Jacob Elordi'},
+  'Delroy Lindo — Sinners':           {type:'person', query:'Delroy Lindo'},
+  'Sean Penn — One Battle':           {type:'person', query:'Sean Penn'},
+  'Stellan Skarsgård — Sentimental Value':{type:'person', query:'Stellan Skarsgård'},
+  'Elle Fanning — Sentimental Value':           {type:'person', query:'Elle Fanning'},
+  'Inga Ibsdotter Lilleaas — Sentimental Value':{type:'person', query:'Inga Ibsdotter Lilleaas'},
+  'Amy Madigan — Weapons':                      {type:'person', query:'Amy Madigan'},
+  'Wunmi Mosaku — Sinners':                     {type:'person', query:'Wunmi Mosaku'},
+  'Teyana Taylor — One Battle':                 {type:'person', query:'Teyana Taylor'},
+  "Bugonia — Will Tracy":             {type:'movie', query:'Bugonia', year:2025},
+  "Frankenstein — Del Toro":          {type:'movie', query:'Frankenstein', year:2025},
+  "Hamnet — O'Farrell & Zhao":        {type:'movie', query:'Hamnet', year:2025},
+  "One Battle — PTA":                 {type:'movie', query:'One Battle After Another', year:2025},
+  "Train Dreams — Bentley & Kwedar": {type:'movie', query:'Train Dreams', year:2025},
+  "Blue Moon — Kaplow":               {type:'movie', query:'Blue Moon', year:2025},
+  "It Was Just an Accident — Panahi": {type:'movie', query:'It Was Just an Accident', year:2025},
+  "Marty Supreme — Bronstein & Safdie":{type:'movie', query:'Marty Supreme', year:2025},
+  "Sentimental Value — Trier & Vogt": {type:'movie', query:'Sentimental Value', year:2025},
+  "Sinners — Ryan Coogler":           {type:'movie', query:'Sinners', year:2025},
+  "F1 — Mirrione":                    {type:'movie', query:'F1', year:2025},
+  "Marty Supreme — Bronstein & Safdie__edit":{type:'movie', query:'Marty Supreme', year:2025},
+  "One Battle — Jurgensen":           {type:'movie', query:'One Battle After Another', year:2025},
+  "Sentimental Value — Bugge Coutté": {type:'movie', query:'Sentimental Value', year:2025},
+  "Sinners — Shawver":                {type:'movie', query:'Sinners', year:2025},
+  "Avatar: Fire & Ash — Scott":       {type:'movie', query:'Avatar Fire and Ash', year:2025},
+  "Frankenstein — Hawley":            {type:'movie', query:'Frankenstein', year:2025},
+  "Hamnet — Turzanska":               {type:'movie', query:'Hamnet', year:2025},
+  "Marty Supreme — Bellizzi":         {type:'movie', query:'Marty Supreme', year:2025},
+  "Sinners — Ruth E. Carter":         {type:'movie', query:'Sinners', year:2025},
+  "Bugonia — Fendrix":                {type:'movie', query:'Bugonia', year:2025},
+  "Frankenstein — Desplat":           {type:'movie', query:'Frankenstein', year:2025},
+  "Hamnet — Max Richter":             {type:'movie', query:'Hamnet', year:2025},
+  "One Battle — Jonny Greenwood":     {type:'movie', query:'One Battle After Another', year:2025},
+  "Sinners — Ludwig Göransson":       {type:'movie', query:'Sinners', year:2025},
+  '"Dear Me" — Diane Warren':         {type:'person', query:'Diane Warren'},
+  '"Golden" — KPop Demon Hunters':    {type:'movie', query:'K-Pop Demon Hunters', year:2025},
+  '"I Lied to You" — Sinners':        {type:'movie', query:'Sinners', year:2025},
+  '"Sweet Dreams of Joy" — Viva Verdi!':{type:'movie', query:'Viva Verdi', year:2025},
+  '"Train Dreams" — Train Dreams':    {type:'movie', query:'Train Dreams', year:2025},
+  'Kokuho':                           {type:'movie', query:'Kokuho', year:2025},
+  'The Smashing Machine':             {type:'movie', query:'The Smashing Machine', year:2025},
+  'The Ugly Stepsister':              {type:'movie', query:'The Ugly Stepsister', year:2025},
+  'Sirât':                            {type:'movie', query:'Sirât', year:2025},
+  'Avatar: Fire and Ash':             {type:'movie', query:'Avatar Fire and Ash', year:2025},
+  'Jurassic World Rebirth':           {type:'movie', query:'Jurassic World Rebirth', year:2025},
+  'The Lost Bus':                     {type:'movie', query:'The Lost Bus', year:2025},
+  "Hamnet — Nina Gold":               {type:'movie', query:'Hamnet', year:2025},
+  "Marty Supreme — Venditti":         {type:'movie', query:'Marty Supreme', year:2025},
+  "One Battle — Kulukundis":          {type:'movie', query:'One Battle After Another', year:2025},
+  "The Secret Agent — Domingues":     {type:'movie', query:'The Secret Agent', year:2025},
+  "Sinners — Francine Maisler":       {type:'movie', query:'Sinners', year:2025},
+  'Arco':                             {type:'movie_id', id:804370},
+  'Elio':                             {type:'movie', query:'Elio Pixar', year:2025},
+  'KPop Demon Hunters':               {type:'movie', query:'K-Pop Demon Hunters', year:2025},
+  'Little Amélie…':                   {type:'movie', query:'Little Amelie', year:2025},
+  'Zootopia 2':                       {type:'movie', query:'Zootopia 2', year:2025},
+  'The Secret Agent (Brazil)':        {type:'movie', query:'The Secret Agent', year:2025},
+  'It Was Just an Accident (France)': {type:'movie', query:'It Was Just an Accident', year:2025},
+  'Sentimental Value (Norway)':       {type:'movie', query:'Sentimental Value', year:2025},
+  'Sirât (Spain)':                    {type:'movie', query:'Sirât', year:2025},
+  'The Voice of Hind Rajab (Tunisia)':{type:'movie', query:'The Voice of Hind Rajab', year:2025},
+  'The Alabama Solution':             {type:'movie', query:'The Alabama Solution', year:2025},
+  'Come See Me in the Good Light':    {type:'movie', query:'Come See Me in the Good Light', year:2025},
+  'Cutting Through Rocks':            {type:'movie', query:'Cutting Through Rocks', year:2025},
+  'Mr. Nobody Against Putin':         {type:'movie', query:'Mr Nobody Against Putin', year:2025},
+  'The Perfect Neighbor':             {type:'movie', query:'The Perfect Neighbor', year:2025},
+  'All the Empty Rooms':              {type:'movie', query:'All the Empty Rooms', year:2025},
+  'Armed Only with a Camera':         {type:'movie', query:'Armed Only with a Camera', year:2025},
+  'Children No More':                 {type:'movie', query:'Children No More documentary', year:2025},
+  'The Devil is Busy':                {type:'movie', query:'The Devil is Busy', year:2025},
+  'Perfectly a Strangeness':          {type:'movie', query:'Perfectly a Strangeness', year:2025},
+  "Butcher's Stain":                  {type:'movie', query:"Butcher's Stain", year:2025},
+  "Jane Austen's Period Drama":       {type:'movie', query:"Jane Austen's Period Drama", year:2025},
+  'A Friend of Dorothy':              {type:'movie', query:'A Friend of Dorothy', year:2025},
+  'Two People Exchanging Saliva':     {type:'movie', query:'Two People Exchanging Saliva', year:2025},
+  // FIX: all six shorts now use confirmed TMDB movie IDs — no Wikipedia URLs, no fragile queries
+  'Butterfly':                        {type:'movie_id', id:1233361},
+  'Forevergreen':                     {type:'movie', query:'Forevergreen Engelhardt Spears animated', year:2025},
+  'The Girl Who Cried Pearls':        {type:'movie_id', id:1142149},
+  'Retirement Plan':                  {type:'movie_id', id:1316745},
+  'The Three Sisters':                {type:'movie_id', id:1302562},
+  'The Singers':                      {type:'movie_id', id:1442908},
+};
+
+// Best Picture metadata: director + nomination count
+const PICTURE_META = {
+  'Bugonia':                  {director:'Yorgos Lanthimos', noms:4},
+  'F1':                       {director:'Joseph Kosinski', noms:4},
+  'Frankenstein':             {director:'Guillermo del Toro', noms:9},
+  'Hamnet':                   {director:'Chloé Zhao', noms:8},
+  'Marty Supreme':            {director:'Josh Safdie', noms:9},
+  'One Battle After Another': {director:'Paul Thomas Anderson', noms:13},
+  'The Secret Agent':         {director:'Kleber Mendonça Filho', noms:4},
+  'Sentimental Value':        {director:'Joachim Trier', noms:9},
+  'Sinners':                  {director:'Ryan Coogler', noms:16},
+  'Train Dreams':             {director:'Clint Bentley & Greg Kwedar', noms:4},
+};
+
+// IMDb IDs for all nominees
+const IMDB = {
+  'Bugonia':'tt14543900','F1':'tt10857164','Frankenstein':'tt31193180',
+  'Hamnet':'tt28538518','Marty Supreme':'tt23137798',
+  'One Battle After Another':'tt21692408','The Secret Agent':'tt30258490',
+  'Sentimental Value':'tt22914510','Sinners':'tt31193180','Train Dreams':'tt13433852',
+  'Chloé Zhao — Hamnet':'nm4456120','Josh Safdie — Marty Supreme':'nm1988221',
+  'Paul Thomas Anderson — One Battle':'nm0000759','Joachim Trier — Sentimental Value':'nm0873886',
+  'Ryan Coogler — Sinners':'nm3363032',
+  'Timothée Chalamet — Marty Supreme':'nm3154303','Leonardo DiCaprio — One Battle':'nm0000138',
+  'Ethan Hawke — Blue Moon':'nm0000160','Michael B. Jordan — Sinners':'nm0430107',
+  'Wagner Moura — The Secret Agent':'nm0610003',
+  'Jessie Buckley — Hamnet':'nm2361287',"Rose Byrne — If I Had Legs I'd Kick You":'nm0126284',
+  'Kate Hudson — Song Sung Blue':'nm0005028','Renate Reinsve — Sentimental Value':'nm4197729',
+  'Emma Stone — Bugonia':'nm1297015',
+  'Benicio Del Toro — One Battle':'nm0001125','Jacob Elordi — Frankenstein':'nm5924854',
+  'Delroy Lindo — Sinners':'nm0511550','Sean Penn — One Battle':'nm0000576',
+  'Stellan Skarsgård — Sentimental Value':'nm0001745',
+  'Elle Fanning — Sentimental Value':'nm1102577',
+  'Inga Ibsdotter Lilleaas — Sentimental Value':'nm2253807',
+  'Amy Madigan — Weapons':'nm0535016','Wunmi Mosaku — Sinners':'nm4430088',
+  'Teyana Taylor — One Battle':'nm3154526',
+};
+function imdbUrl(nom) {
+  const id = IMDB[nom];
+  if (id) return `https://www.imdb.com/${id.startsWith('nm') ? 'name' : 'title'}/${id}/`;
+  const bare = nom.split(' — ')[0].replace(/^[""]|[""]$/g,'').trim();
+  return `https://www.imdb.com/find/?q=${encodeURIComponent(bare)}`;
+}
+
+const imgCache = {};
+
+async function getTmdbImage(nominee) {
+  if (imgCache[nominee] !== undefined) return imgCache[nominee];
+  if (DIRECT_IMGS[nominee]) { imgCache[nominee]=DIRECT_IMGS[nominee]; return DIRECT_IMGS[nominee]; }
+  let spec = TMDB_LOOKUP[nominee];
+  if (!spec) {
+    const bare = nominee.split(' — ')[0].replace(/^[""]|[""]$/g,'').trim();
+    spec = TMDB_LOOKUP[bare] || {type:'movie', query:bare, year:2025};
+  }
+  const base=`https://api.themoviedb.org/3`, key=`?api_key=${TMDB_KEY}`;
+  try {
+    let path=null;
+    if (spec.type==='movie_id') {
+      const r=await fetch(`${base}/movie/${spec.id}${key}`);
+      const d=await r.json(); path=d.poster_path||null;
+    } else if (spec.type==='person') {
+      const r=await fetch(`${base}/search/person${key}&query=${encodeURIComponent(spec.query)}&language=en-US&page=1`);
+      const d=await r.json(); path=d.results?.[0]?.profile_path||null;
+    } else {
+      const yp=spec.year?`&year=${spec.year}`:'';
+      const r=await fetch(`${base}/search/movie${key}&query=${encodeURIComponent(spec.query)}${yp}&language=en-US&page=1`);
+      const d=await r.json(); path=d.results?.find(m=>m.poster_path)?.poster_path||null;
+      if (!path&&spec.year) {
+        const r2=await fetch(`${base}/search/movie${key}&query=${encodeURIComponent(spec.query)}&language=en-US&page=1`);
+        const d2=await r2.json(); path=d2.results?.find(m=>m.poster_path)?.poster_path||null;
+      }
+    }
+    const src=path?`${TMDB_IMG}${path}`:null;
+    imgCache[nominee]=src; return src;
+  } catch(e) { imgCache[nominee]=null; return null; }
+}
+
+const CATEGORIES = {
+  major:[
+    {id:'picture',label:'Best Picture',img:true,nominees:['Bugonia','F1','Frankenstein','Hamnet','Marty Supreme','One Battle After Another','The Secret Agent','Sentimental Value','Sinners','Train Dreams']},
+    {id:'director',label:'Best Director',img:true,nominees:['Chloé Zhao — Hamnet','Josh Safdie — Marty Supreme','Paul Thomas Anderson — One Battle','Joachim Trier — Sentimental Value','Ryan Coogler — Sinners']},
+    {id:'actor',label:'Best Actor',img:true,nominees:['Timothée Chalamet — Marty Supreme','Leonardo DiCaprio — One Battle','Ethan Hawke — Blue Moon','Michael B. Jordan — Sinners','Wagner Moura — The Secret Agent']},
+    {id:'actress',label:'Best Actress',img:true,nominees:['Jessie Buckley — Hamnet',"Rose Byrne — If I Had Legs I'd Kick You",'Kate Hudson — Song Sung Blue','Renate Reinsve — Sentimental Value','Emma Stone — Bugonia']},
+    {id:'supp_actor',label:'Best Supporting Actor',img:true,nominees:['Benicio Del Toro — One Battle','Jacob Elordi — Frankenstein','Delroy Lindo — Sinners','Sean Penn — One Battle','Stellan Skarsgård — Sentimental Value']},
+    {id:'supp_actress',label:'Best Supporting Actress',img:true,nominees:['Elle Fanning — Sentimental Value','Inga Ibsdotter Lilleaas — Sentimental Value','Amy Madigan — Weapons','Wunmi Mosaku — Sinners','Teyana Taylor — One Battle']},
+  ],
+  craft:[
+    {id:'adapted',label:'Adapted Screenplay',img:true,nominees:['Bugonia — Will Tracy','Frankenstein — Del Toro',"Hamnet — O'Farrell & Zhao",'One Battle — PTA','Train Dreams — Bentley & Kwedar']},
+    {id:'original',label:'Original Screenplay',img:true,nominees:['Blue Moon — Kaplow','It Was Just an Accident — Panahi','Marty Supreme — Bronstein & Safdie','Sentimental Value — Trier & Vogt','Sinners — Ryan Coogler']},
+    {id:'cinematography',label:'Cinematography',img:true,nominees:['Frankenstein','Marty Supreme','One Battle After Another','Sinners','Train Dreams']},
+    {id:'editing',label:'Film Editing',img:true,nominees:['F1 — Mirrione','Marty Supreme — Bronstein & Safdie','One Battle — Jurgensen','Sentimental Value — Bugge Coutté','Sinners — Shawver']},
+    {id:'production',label:'Production Design',img:true,nominees:['Frankenstein','Hamnet','Marty Supreme','One Battle After Another','Sinners']},
+    {id:'costume',label:'Costume Design',img:true,nominees:['Avatar: Fire & Ash — Scott','Frankenstein — Hawley','Hamnet — Turzanska','Marty Supreme — Bellizzi','Sinners — Ruth E. Carter']},
+    {id:'score',label:'Original Score',img:true,nominees:['Bugonia — Fendrix','Frankenstein — Desplat','Hamnet — Max Richter','One Battle — Jonny Greenwood','Sinners — Ludwig Göransson']},
+    {id:'song',label:'Original Song',img:true,nominees:['"Dear Me" — Diane Warren','"Golden" — KPop Demon Hunters','"I Lied to You" — Sinners','"Sweet Dreams of Joy" — Viva Verdi!','"Train Dreams" — Train Dreams']},
+    {id:'makeup',label:'Makeup & Hair',img:true,nominees:['Frankenstein','Kokuho','Sinners','The Smashing Machine','The Ugly Stepsister']},
+    {id:'sound',label:'Sound',img:true,nominees:['F1','Frankenstein','One Battle After Another','Sinners','Sirât']},
+    {id:'vfx',label:'Visual Effects',img:true,nominees:['Avatar: Fire and Ash','F1','Jurassic World Rebirth','The Lost Bus','Sinners']},
+    {id:'casting',label:'Casting ★',img:true,nominees:['Hamnet — Nina Gold','Marty Supreme — Venditti','One Battle — Kulukundis','The Secret Agent — Domingues','Sinners — Francine Maisler']},
+  ],
+  special:[
+    {id:'animated',label:'Animated Feature',img:true,nominees:['Arco','Elio','KPop Demon Hunters','Little Amélie…','Zootopia 2']},
+    {id:'intl',label:'International Feature',img:true,nominees:['The Secret Agent (Brazil)','It Was Just an Accident (France)','Sentimental Value (Norway)','Sirât (Spain)','The Voice of Hind Rajab (Tunisia)']},
+    {id:'doc_feature',label:'Documentary Feature',img:true,nominees:['The Alabama Solution','Come See Me in the Good Light','Cutting Through Rocks','Mr. Nobody Against Putin','The Perfect Neighbor']},
+    {id:'animated_short',label:'Animated Short',img:true,nominees:['Butterfly','Forevergreen','The Girl Who Cried Pearls','Retirement Plan','The Three Sisters']},
+    {id:'doc_short',label:'Documentary Short',img:true,nominees:['All the Empty Rooms','Armed Only with a Camera','Children No More','The Devil is Busy','Perfectly a Strangeness']},
+    {id:'live_short',label:'Live Action Short',img:true,nominees:["Butcher's Stain","Jane Austen's Period Drama",'A Friend of Dorothy','The Singers','Two People Exchanging Saliva']},
+  ]
+};
+
+const ALL_CATS=[...CATEGORIES.major,...CATEGORIES.craft,...CATEGORIES.special];
+let db=null,userName=localStorage.getItem('oscars_name')||'',picks=JSON.parse(localStorage.getItem('oscars_picks')||'{}'),winners={};
+const ADMIN_PW_KEY='oscars_admin_pw';
+
+function updateProgress(){
+  const total=ALL_CATS.length,filled=Object.keys(picks).length;
+  document.getElementById('progress-fill').style.width=`${Math.round(filled/total*100)}%`;
+  document.getElementById('progress-label').textContent=`${filled} / ${total} picked`;
+}
+
+function buildTile(nom, catId, cat) {
+  const isPicture = cat.id === 'picture';
+  const parts=nom.split(' — '), main=parts[0], sub=parts.slice(1).join(' — ');
+  const tile=document.createElement('div');
+  tile.className='img-tile'+(picks[catId]===nom?' selected':'');
+
+  const wrap=document.createElement('div'); wrap.className='img-wrap';
+  const ph=document.createElement('div'); ph.className='img-placeholder';
+  const phIcon=document.createElement('div'); phIcon.className='img-placeholder-icon'; phIcon.textContent='◈';
+  const phText=document.createElement('div'); phText.className='img-placeholder-text'; phText.textContent=main;
+  ph.appendChild(phIcon); ph.appendChild(phText);
+  const img=document.createElement('img'); img.alt=main;
+  wrap.appendChild(ph); wrap.appendChild(img);
+
+  const check=document.createElement('div'); check.className='img-check'; check.textContent='✓';
+
+  const info=document.createElement('div'); info.className='img-info';
+  const titleEl=document.createElement('div'); titleEl.className='img-title'; titleEl.textContent=main;
+  info.appendChild(titleEl);
+
+  if (isPicture) {
+    // Best Picture: show director + nom count instead of sub + Letterboxd
+    const meta = PICTURE_META[nom];
+    if (meta) {
+      const metaEl=document.createElement('div'); metaEl.className='img-meta';
+      metaEl.textContent=`${meta.director}`;
+      info.appendChild(metaEl);
+      const nomEl=document.createElement('div'); nomEl.className='img-meta';
+      nomEl.textContent=`🏆 ${meta.noms}`;
+      info.appendChild(nomEl);
+    }
+  } else {
+    // All other tiles: sub-label + IMDb link
+    if (sub) { const subEl=document.createElement('div'); subEl.className='img-sub'; subEl.textContent=sub; info.appendChild(subEl); }
+    const link=document.createElement('a'); link.className='img-link'; link.href=imdbUrl(nom);
+    link.target='_blank'; link.rel='noreferrer'; link.textContent='IMDb';
+    link.onclick=e=>e.stopPropagation(); info.appendChild(link);
+  }
+
+  tile.appendChild(wrap); tile.appendChild(check); tile.appendChild(info);
+  return {tile, img, ph};
+}
+
+async function renderSection(section){
+  const el=document.getElementById(`sec-${section}`);
+  el.innerHTML='';
+  for(const cat of CATEGORIES[section]){
+    const block=document.createElement('div'); block.className='cat-block';
+    const picked=picks[cat.id]||'';
+    const head=document.createElement('div'); head.className='cat-head';
+    const titleDiv=document.createElement('div'); titleDiv.className='cat-title'; titleDiv.textContent=cat.label;
+    head.appendChild(titleDiv);
+    if(picked){const cp=document.createElement('div');cp.className='cat-picked';cp.textContent=`✦ ${picked.split(' — ')[0]}`;head.appendChild(cp);}
+    block.appendChild(head);
+    const grid=document.createElement('div');
+    grid.className='img-grid'+(cat.id==='picture'?' five-col':'');
+    block.appendChild(grid); el.appendChild(block);
+
+    for(const nom of cat.nominees){
+      const {tile, img, ph} = buildTile(nom, cat.id, cat);
+      tile.onclick=()=>selectNom(cat.id,nom,block,grid,cat);
+      grid.appendChild(tile);
+      getTmdbImage(nom).then(src=>{
+        if(src){
+          img.onload=()=>{ img.classList.add('loaded'); ph.classList.add('hidden'); };
+          img.onerror=()=>{};
+          img.src=src;
+        }
+      }).catch(()=>{});
+    }
+  }
+}
+
+function selectNom(catId,nom,block,grid,cat){
+  const tiles=[...grid.querySelectorAll('.img-tile')];
+  tiles.forEach((t,i)=>t.classList.toggle('selected',cat.nominees[i]===nom));
+  picks[catId]=nom;
+  localStorage.setItem('oscars_picks',JSON.stringify(picks));
+  let cp=block.querySelector('.cat-picked');
+  if(!cp){cp=document.createElement('div');cp.className='cat-picked';block.querySelector('.cat-head').appendChild(cp);}
+  cp.textContent=`✦ ${nom.split(' — ')[0]}`;
+  updateProgress();
+}
+
+function setName(){
+  const v=document.getElementById('name-input').value.trim();
+  if(!v)return;
+  userName=v;localStorage.setItem('oscars_name',v);
+  document.getElementById('name-box').style.display='none';
+  const g=document.getElementById('greeted');g.style.display='block';g.textContent=`Picking as: ${v}`;
+}
+window.setName=setName;
+
+async function submitPicks(){
+  if(!userName){toast('Enter your name first');return;}
+  const total=ALL_CATS.length,filled=Object.keys(picks).length;
+  if(filled<total){if(!confirm(`You've picked ${filled}/${total} categories. Submit anyway?`))return;}
+  if(db){
+    try{
+      const{ref,set}=await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js');
+      await set(ref(db,`picks/${userName.replace(/[.#$[\]]/g,'_')}`),{name:userName,picks,submitted:Date.now(),score:null});
+      toast('Picks saved ✦');
+    }catch(e){toast('Error saving');console.error(e);}
+  }else{toast('No Firebase — saved locally only');}
+}
+window.submitPicks=submitPicks;
+
+async function loadLeaderboard(){
+  const el=document.getElementById('leaderboard-list'),podEl=document.getElementById('lb-podium');
+  if(!db){el.innerHTML='<div class="lb-empty">Connect Firebase in ⚙ to see live scores.</div>';return;}
+  try{
+    const{ref,onValue}=await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js');
+    onValue(ref(db,'picks'),snap=>{
+      const data=snap.val()||{},entries=Object.values(data);
+      if(!entries.length){el.innerHTML='<div class="lb-empty">No picks yet.</div>';podEl.style.display='none';return;}
+      const hasScores=entries.some(e=>e.score!==null&&e.score!==undefined);
+      document.getElementById('lb-status').textContent=hasScores?'🏆 Final scores':'Picks in — scoring after the show';
+      entries.sort((a,b)=>(b.score||0)-(a.score||0));
+      const max=Math.max(...entries.map(e=>e.score||0),1);
+      if(hasScores&&entries.length>=3){
+        podEl.style.display='grid';
+        const order=[entries[1],entries[0],entries[2]];
+        podEl.innerHTML=order.map((e,i)=>`<div class="podium-card ${['second','first','third'][i]}"><div class="podium-rank">${['2','1','3'][i]}</div><div class="podium-name">${e.name}</div><div class="podium-score">${e.score} pts</div></div>`).join('');
+      }else{podEl.style.display='none';}
+      const listEntries=hasScores?entries.slice(3):entries;
+      el.innerHTML=listEntries.map((e,i)=>{
+        const rank=hasScores?i+4:i+1,pct=hasScores?Math.round((e.score||0)/max*100):0;
+        return `<div class="lb-row"><div class="lb-bg" style="width:${pct}%"></div><div class="lb-rank">${rank}</div><div class="lb-name">${e.name}</div><div class="lb-meta">${hasScores?'':Object.keys(e.picks||{}).length+'/'+ALL_CATS.length}</div>${hasScores?`<div class="lb-pts">${e.score} pts</div>`:''}</div>`;
+      }).join('');
+      document.getElementById('lb-note').textContent=`${entries.length} player${entries.length!==1?'s':''} · ${ALL_CATS.length} categories`;
+    });
+  }catch(e){el.innerHTML='<div class="lb-empty">Error loading.</div>';}
+}
+
+function checkAdmin(){
+  const pw=document.getElementById('admin-pw').value;
+  if(pw===(localStorage.getItem(ADMIN_PW_KEY)||'pollocks2026')){
+    document.getElementById('admin-gate').style.display='none';
+    document.getElementById('admin-panel').style.display='block';
+    renderAdminCats();
+  }else{toast('Wrong password');}
+}
+window.checkAdmin=checkAdmin;
+
+function renderAdminCats(){
+  document.getElementById('admin-cats').innerHTML=ALL_CATS.map(cat=>`
+    <div class="admin-cat">
+      <div style="font-size:8px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)">${cat.label}</div>
+      <select id="winner-${cat.id}" onchange="markWinner('${cat.id}',this.value)">
+        <option value="">— select winner —</option>
+        ${cat.nominees.map(n=>`<option value="${n}" ${winners[cat.id]===n?'selected':''}>${n}</option>`).join('')}
+      </select>
+      ${winners[cat.id]?`<div class="winner-set">✦ ${winners[cat.id]}</div>`:''}
+    </div>`).join('');
+}
+function markWinner(id,val){winners[id]=val;}
+window.markWinner=markWinner;
+
+async function saveWinners(){
+  if(!db){toast('Connect Firebase first');return;}
+  try{
+    const{ref,set,get}=await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js');
+    await set(ref(db,'winners'),winners);
+    const snap=await get(ref(db,'picks'));
+    for(const[key,entry]of Object.entries(snap.val()||{})){
+      let score=0;
+      ALL_CATS.forEach(cat=>{if(winners[cat.id]&&entry.picks?.[cat.id]===winners[cat.id])score++;});
+      await set(ref(db,`picks/${key}/score`),score);
+    }
+    toast(`Scored ✦ ${Object.keys(winners).length} categories`);
+    renderAdminCats();
+  }catch(e){toast('Error saving');console.error(e);}
+}
+window.saveWinners=saveWinners;
+
+async function saveConfig(){
+  const raw=document.getElementById('config-input').value.trim();
+  const status=document.getElementById('config-status');
+  if(!raw){status.className='config-status err';status.textContent='✗ Nothing pasted';return;}
+  let str=raw.match(/\{[\s\S]*\}/)?.[0];
+  if(!str){status.className='config-status err';status.textContent='✗ No config object found';return;}
+  try{
+    str=str.replace(/\/\/[^\n]*/g,'').replace(/'/g,'"').replace(/([{,]\s*)([a-zA-Z_]\w*)(\s*:)/g,'$1"$2"$3').replace(/,(\s*[}\]])/g,'$1');
+    const config=JSON.parse(str);
+    localStorage.setItem('oscars_firebase_config',JSON.stringify(config));
+    status.className='config-status ok';status.textContent='✓ Connecting…';
+    await initFirebase(config);
+    status.textContent='✓ Connected';toast('Firebase connected ✦');
+  }catch(e){status.className='config-status err';status.textContent='✗ '+e.message;}
+}
+window.saveConfig=saveConfig;
+
+function savePw(){
+  const v=document.getElementById('pw-input').value.trim();
+  if(!v)return;
+  localStorage.setItem(ADMIN_PW_KEY,v);
+  document.getElementById('pw-status').className='config-status ok';
+  document.getElementById('pw-status').textContent='✓ Saved';
+}
+window.savePw=savePw;
+
+async function initFirebase(config){
+  const{initializeApp,getApps,deleteApp}=await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js');
+  const{getDatabase}=await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js');
+  const existing=getApps().find(a=>a.name==='oscars-app');
+  if(existing)await deleteApp(existing);
+  const app=initializeApp(config,'oscars-app');
+  db=getDatabase(app);
+  const{ref,get}=await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js');
+  const snap=await get(ref(db,'winners'));
+  if(snap.val())winners=snap.val();
+}
+
+function switchTop(name,e){
+  document.querySelectorAll('.top-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  e.target.classList.add('active');
+  document.getElementById(`tab-${name}`).classList.add('active');
+  if(name==='leaderboard')loadLeaderboard();
+}
+window.switchTop=switchTop;
+
+function switchSec(name,e){
+  document.querySelectorAll('.sec-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.sec-panel').forEach(p=>p.classList.remove('active'));
+  e.target.classList.add('active');
+  document.getElementById(`sec-${name}`).classList.add('active');
+}
+window.switchSec=switchSec;
+
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800);}
+
+(async()=>{
+  await Promise.all([renderSection('major'),renderSection('craft'),renderSection('special')]);
+  updateProgress();
+  if(userName){
+    document.getElementById('name-box').style.display='none';
+    const g=document.getElementById('greeted');g.style.display='block';g.textContent=`Picking as: ${userName}`;
+    document.getElementById('name-input').value=userName;
+  }
+  try{
+    await initFirebase(FIREBASE_CONFIG);
+    document.getElementById('config-status').className='config-status ok';
+    document.getElementById('config-status').textContent='✓ Connected';
+  }catch(e){
+    document.getElementById('config-status').className='config-status err';
+    document.getElementById('config-status').textContent='✗ '+e.message;
+  }
+})();
+</script>
+</body>
+</html>
